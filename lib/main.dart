@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
 // Add DrawPoint class
@@ -37,31 +39,34 @@ class _DrawingHomePageState extends State<DrawingHomePage> {
   final ValueNotifier<List<DrawPoint?>> _pointsNotifier = ValueNotifier<List<DrawPoint?>>([]);
 
   // WIDTH PARAMETERS
-  double widthScale = 1;            // Overall pen size
+  double widthScale = 1;                // Overall pen size
 
-  double minWidth = 2.0;            // Width that the pen starts at
-  double maxWidth = 8.0;            // Width that the pen is capped at
-  double widthFactor = 0.5;         // How much the width increases with speed
-  int widthSmoothingSample = 1;     // How many previous points to average for smoothing the width
-  double widthSmoothingFactor = 0.25;  // The maximum percentagedifference in width between previous points and the current point
+  double minWidth = 4.0;                // Width that the pen starts at
+  double maxWidth = 8.0;                // Width that the pen is capped at
+  double widthFactor = 1.0;             // How much the width increases with speed
+  int widthSmoothingSample = 5;         // How many previous points to average for smoothing the width
+  double widthSmoothingFactor = 0.10;   // The maximum percentage difference in width between previous points and the current point
 
   double skippedDistance = 0;
 
-
+  int linePointsCounter = 0;
 
   void _addPoint(Offset point, {double width = 4.0}) {
     final points = List<DrawPoint?>.from(_pointsNotifier.value);
-    if (points.length > widthSmoothingSample) {
+    if (linePointsCounter >= widthSmoothingSample) {
       final prevPointsAvg = points.reversed.whereType<DrawPoint>().take(widthSmoothingSample).map((p) => p.width).reduce((a, b) => a + b)/widthSmoothingSample;
       if ((width - prevPointsAvg).abs() / prevPointsAvg > widthSmoothingFactor) {
         width = prevPointsAvg * (1 + widthSmoothingFactor * (width > prevPointsAvg ? 1 : -1));
       }
     }
+    linePointsCounter++;
     points.add(DrawPoint(point, width: width));
     _pointsNotifier.value = points;
   }
 
   void _endStroke() {
+    linePointsCounter = 0;
+    skippedDistance = 0;
     final points = List<DrawPoint?>.from(_pointsNotifier.value)..add(null);
     _pointsNotifier.value = points;
   }
@@ -86,11 +91,11 @@ class _DrawingHomePageState extends State<DrawingHomePage> {
         children: [
           Listener(
             onPointerDown: (details) {
-              skippedDistance += details.delta.distanceSquared;
+              /* skippedDistance += details.delta.distanceSquared;
               if (skippedDistance < 2.56) {
                 return;
               }
-              skippedDistance = 0;
+              skippedDistance = 0; */
               _addPoint(details.localPosition, width: (minWidth + details.delta.distance * widthFactor).clamp(minWidth, maxWidth)*widthScale);
             },
             onPointerMove: (details) {
@@ -102,6 +107,9 @@ class _DrawingHomePageState extends State<DrawingHomePage> {
               _addPoint(details.localPosition, width: (minWidth + details.delta.distance * widthFactor).clamp(minWidth, maxWidth)*widthScale);
             },
             onPointerUp: (details) {
+              if (skippedDistance > 0) {
+                _addPoint(details.localPosition, width: (minWidth + details.delta.distance * widthFactor).clamp(minWidth, maxWidth)*widthScale);
+              }
               _endStroke();
             },
             child: RepaintBoundary(
@@ -136,11 +144,15 @@ class DrawingPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = Colors.blue
-      ..strokeCap = StrokeCap.round;
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
     for (int i = 0; i < points.length - 1; i++) {
       if (points[i] != null && points[i + 1] != null) {
         paint.strokeWidth = points[i]!.width;
         canvas.drawLine(points[i]!.offset, points[i + 1]!.offset, paint);
+      } else if (points[i] != null && points[i + 1] == null) {
+        paint.strokeWidth = points[i]!.width;
+        canvas.drawPoints(PointMode.points, [points[i]!.offset], paint);
       }
     }
   }
