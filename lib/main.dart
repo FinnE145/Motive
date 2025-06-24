@@ -19,7 +19,7 @@ class DrawingApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Drawing',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
       ),
       home: const DrawingHomePage(),
     );
