@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import "package:flutter/material.dart";
 
 // Add DrawPoint class
 class DrawPoint {
@@ -24,7 +24,7 @@ class DrawingApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Drawing',
+      title: "Flutter Drawing",
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
       ),
@@ -65,13 +65,13 @@ class _DrawingHomePageState extends State<DrawingHomePage> {
 
   void _endStroke() {
     final raw = _rawPointsNotifier.value.whereType<DrawPoint>().toList();
-    print('Raw points before simplification: ${raw.length}');
+    print("Raw points before simplification: ${raw.length}");
     final curves = fitCubicBezier(raw, 1);
     if (curves.isNotEmpty) {
-      print('Fitted curves: ${curves.length} (${curves.length * 4} points stored - ${((1 - curves.length * 4 / raw.length)*100).toInt()}% compression)');
+      print("Fitted curves: ${curves.length} (${curves.length * 4} points stored - ${((1 - curves.length * 4 / raw.length)*100).toInt()}% compression)");
       _curves.addAll(curves);
     } else {
-      print('No curves fitted');
+      print("No curves fitted");
       _curves.addAll(raw.map((e) => BezierCurve(e.offset, Offset.zero, Offset.zero, Offset.zero, width: e.width)));
     }
     _curves.add(null);
@@ -98,7 +98,7 @@ class _DrawingHomePageState extends State<DrawingHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Draw with Stylus'),
+        title: const Text("Draw with Stylus"),
       ),
       body: Stack(
         children: [
@@ -145,7 +145,7 @@ class _DrawingHomePageState extends State<DrawingHomePage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _clear,
-        tooltip: 'Clear',
+        tooltip: "Clear",
         child: const Icon(Icons.clear),
       ),
     );
@@ -193,8 +193,6 @@ class DrawingPainter extends CustomPainter {
   bool shouldRepaint(DrawingPainter oldDelegate) => oldDelegate.curves != curves;
 }
 
-
-// --- FitCurve package is used to fit cubic Bézier curves from raw points ---
 List<BezierCurve> fitCubicBezier(List<DrawPoint> points, double maxError) {
   if (points.length < 4) return [];
 
